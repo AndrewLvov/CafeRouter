@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 from vkappauth.vk_app_auth import VKAppAuth
 from settings_local import CLIENT_SECRET
 import urllib2
@@ -15,7 +15,7 @@ USER_ID = None
 
 @app.route('/')
 def home_handler():
-    if not ACCESS_TOKEN:
+    if not session.get('access_token'):
         return redirect('/auth/')
     return render_template("Home.html")
 
@@ -55,10 +55,8 @@ def get_access_token():
     }
     url = 'https://oauth.vk.com/access_token?' + urllib.urlencode(request_params)
     response = json.loads(urllib2.urlopen(url).read())
-    global USER_ID
-    USER_ID = response['user_id']
-    global ACCESS_TOKEN
-    ACCESS_TOKEN = response['access_token']
+    session['vk_user_id'] = response['user_id']
+    session['access_token'] = response['access_token']
     return redirect('/')
 
 
@@ -73,4 +71,6 @@ def get_access_token():
 
 
 if __name__ == '__main__':
+    app.secret_key = 'super secret key'
+    app.config['SESSION_TYPE'] = 'filesystem'
     app.run()
